@@ -64,4 +64,4 @@ This project is configured for easy deployment on **Render**:
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
 ---
-*Built with ❤️ for professional crypto enthusiasts.*
+*Built with ❤️ by Vignesh Palika.*
