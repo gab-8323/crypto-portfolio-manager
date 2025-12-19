@@ -77,7 +77,7 @@
                     <button onclick="toggleMarketExplorer()" class="btn-view"
                         style="background: var(--gradient-main); color: #000; border: none; font-weight: bold;">Explore
                         Market</button>
-                    <button onclick="toggleNews()" class="btn-view"
+                    <button onclick="toggleNews(event)" class="btn-view"
                         style="background: var(--accent-secondary); color: white; border: none;">Show Market
                         News</button>
                 </div>
@@ -761,42 +761,54 @@
                 `;
                 grid.appendChild(card);
 
-                // Render Sparkline
-                const ctx = document.getElementById(`explorer-spark-${coin.id}`).getContext('2d');
-                new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: Array.from({ length: coin.sparkline_in_7d.price.length }, (_, i) => i),
-                        datasets: [{
-                            data: coin.sparkline_in_7d.price,
-                            borderColor: chartColor,
-                            borderWidth: 2,
-                            pointRadius: 0,
-                            fill: true,
-                            backgroundColor: chartBg,
-                            tension: 0.3
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false }, tooltip: { enabled: false } },
-                        scales: { x: { display: false }, y: { display: false } }
-                    }
-                });
+                // Render Sparkline safely
+                const sparklineData = (coin.sparkline_in_7d && coin.sparkline_in_7d.price) ? coin.sparkline_in_7d.price : [];
+
+                if (sparklineData.length > 0) {
+                    const ctx = document.getElementById(`explorer-spark-${coin.id}`).getContext('2d');
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: Array.from({ length: sparklineData.length }, (_, i) => i),
+                            datasets: [{
+                                data: sparklineData,
+                                borderColor: chartColor,
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                fill: true,
+                                backgroundColor: chartBg,
+                                tension: 0.3
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                            scales: { x: { display: false }, y: { display: false } }
+                        }
+                    });
+                } else {
+                    // Fallback for missing sparkline
+                    const ctx = document.getElementById(`explorer-spark-${coin.id}`).getContext('2d');
+                    ctx.font = '10px Outfit';
+                    ctx.fillStyle = '#888';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('No history data', 50, 25);
+                }
             });
         }
 
-        function toggleNews() {
+        function toggleNews(event) {
             const newsSection = document.getElementById('news-section');
-            const btn = event.target;
+            const btn = event ? event.target : document.querySelector('button[onclick*="toggleNews"]');
+
             if (newsSection.style.display === 'none') {
                 newsSection.style.display = 'block';
-                btn.innerText = 'Hide Market News';
+                if (btn) btn.innerText = 'Hide Market News';
                 newsSection.scrollIntoView({ behavior: 'smooth' });
             } else {
                 newsSection.style.display = 'none';
-                btn.innerText = 'Show Market News';
+                if (btn) btn.innerText = 'Show Market News';
             }
         }
 

@@ -80,22 +80,33 @@ def get_market_news():
     try:
         response = requests.get(url, headers=headers, timeout=5)
         if response.status_code == 200:
-            root = ET.fromstring(response.content)
-            items = []
-            for item in root.findall('.//item')[:5]:
-                title = item.find('title').text
-                link = item.find('link').text
-                pub_date = item.find('pubDate').text if item.find('pubDate') is not None else ""
+            # Use a more robust way to find items (handling potential namespaces)
+            import re
+            content = response.text
+            # Simple regex to find items if ET fails or to be safe
+            items_raw = re.findall(r'<item>(.*?)</item>', content, re.DOTALL)
+            
+            parsed_items = []
+            for item_content in items_raw[:5]:
+                title_match = re.search(r'<title>(.*?)</title>', item_content, re.DOTALL)
+                link_match = re.search(r'<link>(.*?)</link>', item_content, re.DOTALL)
+                date_match = re.search(r'<pubDate>(.*?)</pubDate>', item_content, re.DOTALL)
                 
-                # Simple time ago or formatting
-                items.append({
-                    'title': html.unescape(title),
-                    'link': link,
-                    'date': pub_date
-                })
-            news_cache['items'] = items
-            news_cache['last_updated'] = time.time()
-            return items
+                if title_match and link_match:
+                    title = re.sub(r'<!\[CDATA\[(.*?)\]\]>', r'\1', title_match.group(1)).strip()
+                    link = link_match.group(1).strip()
+                    date = date_match.group(1).strip() if date_match else ""
+                    
+                    parsed_items.append({
+                        'title': html.unescape(title),
+                        'link': link,
+                        'date': date
+                    })
+            
+            if parsed_items:
+                news_cache['items'] = parsed_items
+                news_cache['last_updated'] = time.time()
+                return parsed_items
     except Exception as e:
         print(f"News fetch error: {e}")
     return news_cache['items']
