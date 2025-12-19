@@ -27,9 +27,10 @@
             <!-- Duplicate for seamless loop if few items -->
             {% for item in portfolio %}
             <div class="ticker__item">
-                {{ item.symbol|upper }} <span
-                    class="{{ 'positive-change' if item.change_24h >= 0 else 'negative-change' }}">{{
-                    "{:+.2f}%".format(item.change_24h) }}</span>
+                {{ item.symbol|upper }}
+                <span class="{{ 'positive-change' if item.change_24h >= 0 else 'negative-change' }}">
+                    {{ "{:+.2f}%".format(item.change_24h) }}
+                </span>
             </div>
             {% endfor %}
         </div>
@@ -156,8 +157,9 @@
                             {% endif %}
                         </div>
                         <div style="margin: 15px 0;">
-                            <div class="market-price" style="font-size: 1.5em; font-weight: bold;">{{ currency_symbol
-                                }}{{ "{:,.2f}".format(item.price) }}</div>
+                            <div class="market-price" style="font-size: 1.5em; font-weight: bold;">
+                                {{ currency_symbol }}{{ "{:,.2f}".format(item.price) }}
+                            </div>
                             <div
                                 class="market-change {{ 'positive-change' if item.change_24h >= 0 else 'negative-change' }}">
                                 {{ "{:+.2f}%".format(item.change_24h) }}
@@ -301,10 +303,12 @@
                                 </td>
                                 <td>{{ currency_symbol }}{{ "{:,.2f}".format(item.value) }}</td>
                                 <td class="action-cell">
-                                    <button class="btn-view" onclick="filterChart('{{ item.symbol }}')"
+                                    <button class="btn-view" data-symbol="{{ item.symbol }}"
+                                        onclick="filterChart(this.dataset.symbol)"
                                         aria-label="View graph for {{ item.symbol }}">View Graph</button>
-                                    <button class="btn-view"
-                                        onclick="prepSell('{{ item.symbol }}', {{ item.price or 0 }})"
+                                    <button class="btn-view sell-btn" data-symbol="{{ item.symbol }}"
+                                        data-price="{{ item.price|default(0) }}"
+                                        onclick="prepSell(this.dataset.symbol, parseFloat(this.dataset.price))"
                                         style="background: var(--accent-secondary); color: white; border: none;"
                                         aria-label="Sell {{ item.symbol }}">Sell</button>
                                     <a href="/delete/{{ item.id }}" class="btn-delete"
@@ -403,6 +407,12 @@
                                 <br>
                                 <small class="${changeClass}">${changeSign}${coin.change_24h.toFixed(2)}%</small>
                             `;
+
+                            // Update Sell Button Price (live sync)
+                            const sellBtn = row.querySelector('.sell-btn');
+                            if (sellBtn) {
+                                sellBtn.setAttribute('data-price', coin.price);
+                            }
 
                             plAmountCell.className = coin.pl >= 0 ? 'positive-change' : 'negative-change';
                             plAmountCell.innerText = currency + formatter.format(coin.pl);
