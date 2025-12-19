@@ -93,12 +93,14 @@
                 <div style="display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap;">
                     <div>
                         <h2 id="balance-heading" style="border:none; margin-bottom:5px;">Total Balance</h2>
-                        <div class="total-balance" aria-live="polite">{{ currency_symbol }}{{
-                            "{:,.2f}".format(total_value) }}</div>
+                        <div id="total-balance-display" class="total-balance" aria-live="polite">
+                            {{ currency_symbol }}{{ "{:,.2f}".format(total_value) }}
+                        </div>
                     </div>
                     <div>
                         <h2 style="border:none; margin-bottom:5px;">Total P/L</h2>
-                        <div class="total-balance {{ 'positive-change' if total_pl >= 0 else 'negative-change' }}"
+                        <div id="total-pl-display"
+                            class="total-balance {{ 'positive-change' if total_pl >= 0 else 'negative-change' }}"
                             style="font-size: 2em;">
                             {{ currency_symbol }}{{ "{:,.2f}".format(total_pl) }}
                             <small>({{ "{:+.2f}%".format(total_roi) }})</small>
@@ -168,172 +170,170 @@
                     </div>
                     {% endfor %}
                 </div>
-                <!-- Market grid ends -->
+            </section> <!-- Fixed: Closing Market Watch Section -->
 
-                <!-- Market Explorer Section (Dynamic) -->
-                <section id="explorer-section" class="card" aria-labelledby="explorer-heading"
-                    style="display: none; border: 1px solid var(--accent-primary);">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h2 id="explorer-heading" style="margin: 0;">Market Explorer (Top 50)</h2>
-                        <button onclick="toggleMarketExplorer()" class="btn-delete"
-                            style="padding: 5px 15px; background: #444; color: white;">Close</button>
-                    </div>
-                    <div id="explorer-grid" class="market-grid"
-                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
-                        <p style="color: var(--text-secondary); text-align: center; grid-column: 1/-1;">Loading market
-                            data...</p>
-                    </div>
-                </section>
+            <!-- Market Explorer Section (Dynamic) -->
+            <section id="explorer-section" class="card" aria-labelledby="explorer-heading"
+                style="display: none; border: 1px solid var(--accent-primary);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 id="explorer-heading" style="margin: 0;">Market Explorer (Top 50)</h2>
+                    <button onclick="toggleMarketExplorer()" class="btn-delete"
+                        style="padding: 5px 15px; background: #444; color: white;">Close</button>
+                </div>
+                <div id="explorer-grid" class="market-grid"
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                    <p style="color: var(--text-secondary); text-align: center; grid-column: 1/-1;">Loading market
+                        data...</p>
+                </div>
+            </section>
 
-                <!-- Management Section -->
-                <section class="card" aria-labelledby="manage-heading">
-                    <h2 id="manage-heading" style="text-align: center; margin-bottom: 25px;">Manage Assets</h2>
+            <!-- Management Section -->
+            <section class="card" aria-labelledby="manage-heading">
+                <h2 id="manage-heading" style="text-align: center; margin-bottom: 25px;">Manage Assets</h2>
 
-                    <!-- Add Coin Form -->
-                    <form action="/add" method="POST" class="form-inline" id="trade-form">
-                        <select name="trade_type" id="trade-type-select" onchange="updateTradeUI()"
-                            style="width: auto;">
-                            <option value="BUY">BUY</option>
-                            <option value="SELL">SELL</option>
-                        </select>
+                <!-- Add Coin Form -->
+                <form action="/add" method="POST" class="form-inline" id="trade-form">
+                    <select name="trade_type" id="trade-type-select" onchange="updateTradeUI()" style="width: auto;">
+                        <option value="BUY">BUY</option>
+                        <option value="SELL">SELL</option>
+                    </select>
 
-                        <label for="symbol-input" class="sr-only">Coin Symbol</label>
-                        <input type="text" id="symbol-input" name="symbol" list="available-coins"
-                            placeholder="Coin Name (e.g. bitcoin)" required aria-required="true" autocomplete="off">
-                        <datalist id="available-coins">
-                            {% for coin in all_coins %}
-                            <option value="{{ coin.id }}">{{ coin.name }} ({{ coin.symbol|upper }})</option>
-                            {% endfor %}
-                        </datalist>
-
-                        <label for="buy-price-input" class="sr-only" id="price-label">Buy Price</label>
-                        <input type="number" id="buy-price-input" name="buy_price" step="any" placeholder="Price ($)"
-                            aria-label="Price per coin">
-
-                        <label for="quantity-input" class="sr-only">Quantity</label>
-                        <input type="number" id="quantity-input" name="quantity" step="any" placeholder="Quantity"
-                            required aria-required="true">
-
-                        <button type="submit" class="btn-add" id="trade-btn">Execute Buy</button>
-                    </form>
-
-                    <script>
-                        function updateTradeUI() {
-                            const type = document.getElementById('trade-type-select').value;
-                            const btn = document.getElementById('trade-btn');
-                            const label = document.getElementById('price-label');
-
-                            if (type === 'SELL') {
-                                btn.innerText = 'Execute Sell';
-                                btn.style.background = 'var(--accent-secondary)'; // Reddish for sell
-                                btn.style.boxShadow = '0 4px 15px rgba(255, 0, 80, 0.3)';
-                                label.innerText = 'Sell Price';
-                            } else {
-                                btn.innerText = 'Execute Buy';
-                                btn.style.background = 'var(--gradient-main)';
-                                btn.style.boxShadow = '0 4px 15px rgba(0, 242, 234, 0.3)';
-                                label.innerText = 'Buy Price';
-                            }
-                        }
-
-                        function prepSell(symbol, price) {
-                            const typeSelect = document.getElementById('trade-type-select');
-                            const symbolInput = document.getElementById('symbol-input');
-                            const priceInput = document.getElementById('buy-price-input');
-                            const quantityInput = document.getElementById('quantity-input');
-
-                            typeSelect.value = 'SELL';
-                            updateTradeUI();
-                            symbolInput.value = symbol;
-                            priceInput.value = price;
-                            quantityInput.focus();
-
-                            document.getElementById('manage-heading').scrollIntoView({ behavior: 'smooth' });
-                        }
-                    </script>
-
-                    <!-- Portfolio Table -->
-                    <div class="sub-header">Your Current Asset Holdings</div>
-                    <div class="table-responsive">
-                        <table>
-                            <caption class="sr-only">Your current crypto assets holdings</caption>
-                            <thead>
-                                <tr>
-                                    <th scope="col">Coin</th>
-                                    <th scope="col">Quantity</th>
-                                    <th scope="col">Avg Buy Price</th>
-                                    <th scope="col">Current Price</th>
-                                    <th scope="col">P/L ({{ currency_symbol }})</th>
-                                    <th scope="col">ROI</th>
-                                    <th scope="col">Total Value</th>
-                                    <th scope="col">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for item in portfolio %}
-                                <tr data-symbol="{{ item.symbol }}">
-                                    <td>
-                                        <div style="display:flex; align-items:center; gap:10px;">
-                                            {% if item.image %}
-                                            <img src="{{ item.image }}" alt=""
-                                                style="width:20px; height:20px; border-radius:50%;">
-                                            {% endif %}
-                                            {{ item.name }}
-                                            <small style="color:#888;">{{ item.symbol|upper }}</small>
-                                        </div>
-                                    </td>
-                                    <td>{{ item.quantity }}</td>
-                                    <td>{{ currency_symbol }}{{ "{:,.2f}".format(item.avg_buy_price) }}</td>
-                                    <td>
-                                        {{ currency_symbol }}{{ "{:,.2f}".format(item.price) }}
-                                        <br>
-                                        <small
-                                            class="{{ 'positive-change' if item.change_24h >= 0 else 'negative-change' }}">
-                                            {{ "{:+.2f}%".format(item.change_24h) }}
-                                        </small>
-                                    </td>
-                                    <td class="{{ 'positive-change' if item.pl_amount >= 0 else 'negative-change' }}">
-                                        {{ currency_symbol }}{{ "{:,.2f}".format(item.pl_amount) }}
-                                    </td>
-                                    <td class="{{ 'positive-change' if item.pl_percent >= 0 else 'negative-change' }}">
-                                        {{ "{:+.2f}%".format(item.pl_percent) }}
-                                    </td>
-                                    <td>{{ currency_symbol }}{{ "{:,.2f}".format(item.value) }}</td>
-                                    <td class="action-cell">
-                                        <button class="btn-view" onclick="filterChart('{{ item.symbol }}')"
-                                            aria-label="View graph for {{ item.symbol }}">View Graph</button>
-                                        <button class="btn-view"
-                                            onclick="prepSell('{{ item.symbol }}', {{ item.price or 0 }})"
-                                            style="background: var(--accent-secondary); color: white; border: none;"
-                                            aria-label="Sell {{ item.symbol }}">Sell</button>
-                                        <a href="/delete/{{ item.id }}" class="btn-delete"
-                                            onclick="return confirm('Are you sure you want to remove this asset?')"
-                                            aria-label="Remove {{ item.symbol }}">Remove</a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-
-                <!-- Market News Section (At Last) -->
-                <section id="news-section" class="card" aria-labelledby="news-heading" style="display: none;">
-                    <h2 id="news-heading">Market News</h2>
-                    <div class="news-list">
-                        {% if news %}
-                        {% for item in news %}
-                        <div class="news-item">
-                            <a href="{{ item.link }}" target="_blank" class="news-link">{{ item.title }}</a>
-                            <div class="news-meta">Source: CoinTelegraph • {{ item.date }}</div>
-                        </div>
+                    <label for="symbol-input" class="sr-only">Coin Symbol</label>
+                    <input type="text" id="symbol-input" name="symbol" list="available-coins"
+                        placeholder="Coin Name (e.g. bitcoin)" required aria-required="true" autocomplete="off">
+                    <datalist id="available-coins">
+                        {% for coin in all_coins %}
+                        <option value="{{ coin.id }}">{{ coin.name }} ({{ coin.symbol|upper }})</option>
                         {% endfor %}
-                        {% else %}
-                        <p style="color: var(--text-secondary);">No recent news available.</p>
-                        {% endif %}
+                    </datalist>
+
+                    <label for="buy-price-input" class="sr-only" id="price-label">Buy Price</label>
+                    <input type="number" id="buy-price-input" name="buy_price" step="any" placeholder="Price ($)"
+                        aria-label="Price per coin">
+
+                    <label for="quantity-input" class="sr-only">Quantity</label>
+                    <input type="number" id="quantity-input" name="quantity" step="any" placeholder="Quantity" required
+                        aria-required="true">
+
+                    <button type="submit" class="btn-add" id="trade-btn">Execute Buy</button>
+                </form>
+
+                <script>
+                    function updateTradeUI() {
+                        const type = document.getElementById('trade-type-select').value;
+                        const btn = document.getElementById('trade-btn');
+                        const label = document.getElementById('price-label');
+
+                        if (type === 'SELL') {
+                            btn.innerText = 'Execute Sell';
+                            btn.style.background = 'var(--accent-secondary)'; // Reddish for sell
+                            btn.style.boxShadow = '0 4px 15px rgba(255, 0, 80, 0.3)';
+                            label.innerText = 'Sell Price';
+                        } else {
+                            btn.innerText = 'Execute Buy';
+                            btn.style.background = 'var(--gradient-main)';
+                            btn.style.boxShadow = '0 4px 15px rgba(0, 242, 234, 0.3)';
+                            label.innerText = 'Buy Price';
+                        }
+                    }
+
+                    function prepSell(symbol, price) {
+                        const typeSelect = document.getElementById('trade-type-select');
+                        const symbolInput = document.getElementById('symbol-input');
+                        const priceInput = document.getElementById('buy-price-input');
+                        const quantityInput = document.getElementById('quantity-input');
+
+                        typeSelect.value = 'SELL';
+                        updateTradeUI();
+                        symbolInput.value = symbol;
+                        priceInput.value = price;
+                        quantityInput.focus();
+
+                        document.getElementById('manage-heading').scrollIntoView({ behavior: 'smooth' });
+                    }
+                </script>
+
+                <!-- Portfolio Table -->
+                <div class="sub-header">Your Current Asset Holdings</div>
+                <div class="table-responsive">
+                    <table>
+                        <caption class="sr-only">Your current crypto assets holdings</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Coin</th>
+                                <th scope="col">Quantity</th>
+                                <th scope="col">Avg Buy Price</th>
+                                <th scope="col">Current Price</th>
+                                <th scope="col">P/L ({{ currency_symbol }})</th>
+                                <th scope="col">ROI</th>
+                                <th scope="col">Total Value</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in portfolio %}
+                            <tr data-symbol="{{ item.symbol }}">
+                                <td>
+                                    <div style="display:flex; align-items:center; gap:10px;">
+                                        {% if item.image %}
+                                        <img src="{{ item.image }}" alt=""
+                                            style="width:20px; height:20px; border-radius:50%;">
+                                        {% endif %}
+                                        {{ item.name }}
+                                        <small style="color:#888;">{{ item.symbol|upper }}</small>
+                                    </div>
+                                </td>
+                                <td>{{ item.quantity }}</td>
+                                <td>{{ currency_symbol }}{{ "{:,.2f}".format(item.avg_buy_price) }}</td>
+                                <td>
+                                    {{ currency_symbol }}{{ "{:,.2f}".format(item.price) }}
+                                    <br>
+                                    <small
+                                        class="{{ 'positive-change' if item.change_24h >= 0 else 'negative-change' }}">
+                                        {{ "{:+.2f}%".format(item.change_24h) }}
+                                    </small>
+                                </td>
+                                <td class="{{ 'positive-change' if item.pl >= 0 else 'negative-change' }}">
+                                    {{ currency_symbol }}{{ "{:,.2f}".format(item.pl) }}
+                                </td>
+                                <td class="{{ 'positive-change' if item.roi >= 0 else 'negative-change' }}">
+                                    {{ "{:+.2f}%".format(item.roi) }}
+                                </td>
+                                <td>{{ currency_symbol }}{{ "{:,.2f}".format(item.value) }}</td>
+                                <td class="action-cell">
+                                    <button class="btn-view" onclick="filterChart('{{ item.symbol }}')"
+                                        aria-label="View graph for {{ item.symbol }}">View Graph</button>
+                                    <button class="btn-view"
+                                        onclick="prepSell('{{ item.symbol }}', {{ item.price or 0 }})"
+                                        style="background: var(--accent-secondary); color: white; border: none;"
+                                        aria-label="Sell {{ item.symbol }}">Sell</button>
+                                    <a href="/delete/{{ item.id }}" class="btn-delete"
+                                        onclick="return confirm('Are you sure you want to remove this asset?')"
+                                        aria-label="Remove {{ item.symbol }}">Remove</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Market News Section (At Last) -->
+            <section id="news-section" class="card" aria-labelledby="news-heading" style="display: none;">
+                <h2 id="news-heading">Market News</h2>
+                <div class="news-list">
+                    {% if news %}
+                    {% for item in news %}
+                    <div class="news-item">
+                        <a href="{{ item.link }}" target="_blank" class="news-link">{{ item.title }}</a>
+                        <div class="news-meta">Source: CoinTelegraph • {{ item.date }}</div>
                     </div>
-                </section>
+                    {% endfor %}
+                    {% else %}
+                    <p style="color: var(--text-secondary);">No recent news available.</p>
+                    {% endif %}
+                </div>
+            </section>
         </main>
     </div>
 
@@ -365,42 +365,52 @@
                     const currency = data.currency_symbol;
                     const formatter = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-                    // 1. Update Totals
-                    document.querySelector('.total-balance[aria-live="polite"]').innerText =
-                        currency + formatter.format(data.total_value);
+                    // 1. Update Totals (Using specific IDs)
+                    const totalBalEl = document.getElementById('total-balance-display');
+                    const totalPlEl = document.getElementById('total-pl-display');
 
-                    const plEl = document.querySelectorAll('.total-balance')[1];
-                    const plSign = data.total_pl >= 0 ? '+' : '';
-                    plEl.innerHTML = `
-                        ${currency}${formatter.format(data.total_pl)}
-                        <small>(${plSign}${data.total_roi.toFixed(2)}%)</small>
-                    `;
-                    plEl.className = 'total-balance ' + (data.total_pl >= 0 ? 'positive-change' : 'negative-change');
+                    if (totalBalEl) totalBalEl.innerText = currency + formatter.format(data.total_value);
+
+                    if (totalPlEl) {
+                        const plSign = data.total_pl >= 0 ? '+' : '';
+                        totalPlEl.innerHTML = `
+                            ${currency}${formatter.format(data.total_pl)}
+                            <small>(${plSign}${data.total_roi.toFixed(2)}%)</small>
+                        `;
+                        totalPlEl.className = 'total-balance ' + (data.total_pl >= 0 ? 'positive-change' : 'negative-change');
+                    }
 
                     // 2. Update Table Rows AND Market Grid Cards
                     data.portfolio.forEach(coin => {
                         // A. Table Row
                         const row = document.querySelector(`tr[data-symbol="${coin.symbol}"]`);
                         if (row) {
-                            // ... (Same table update logic)
-                            const priceCell = row.children[3];
+                            // Update Table Cells
+                            const qtyCell = row.children[1];
+                            const avgPriceCell = row.children[2];
+                            const currentPriceCell = row.children[3];
+                            const plAmountCell = row.children[4];
+                            const roiCell = row.children[5];
+                            const totalValueCell = row.children[6];
+
                             const changeSign = coin.change_24h >= 0 ? '+' : '';
                             const changeClass = coin.change_24h >= 0 ? 'positive-change' : 'negative-change';
-                            priceCell.innerHTML = `
+
+                            qtyCell.innerText = coin.quantity;
+                            avgPriceCell.innerText = currency + formatter.format(coin.avg_buy_price);
+                            currentPriceCell.innerHTML = `
                                 ${currency}${formatter.format(coin.price)}
                                 <br>
                                 <small class="${changeClass}">${changeSign}${coin.change_24h.toFixed(2)}%</small>
                             `;
 
-                            const plCell = row.children[4];
-                            plCell.className = coin.pl >= 0 ? 'positive-change' : 'negative-change';
-                            plCell.innerText = currency + formatter.format(coin.pl);
+                            plAmountCell.className = coin.pl >= 0 ? 'positive-change' : 'negative-change';
+                            plAmountCell.innerText = currency + formatter.format(coin.pl);
 
-                            const roiCell = row.children[5];
                             roiCell.className = coin.roi >= 0 ? 'positive-change' : 'negative-change';
                             roiCell.innerText = (coin.roi >= 0 ? '+' : '') + coin.roi.toFixed(2) + '%';
 
-                            row.children[6].innerText = currency + formatter.format(coin.value);
+                            totalValueCell.innerText = currency + formatter.format(coin.value);
                         }
 
                         // B. Market Grid Card
@@ -509,17 +519,25 @@
 
         document.addEventListener('DOMContentLoaded', function () {
             const rawData = document.getElementById('portfolio-data').textContent;
-            portfolioData = JSON.parse(rawData);
+            try {
+                portfolioData = JSON.parse(rawData);
+            } catch (e) {
+                console.error("Error parsing portfolio", e);
+                portfolioData = [];
+            }
 
-            if (portfolioData.length === 0) return;
-
-            const labels = portfolioData.map(item => item.symbol.charAt(0).toUpperCase() + item.symbol.slice(1));
+            const labels = portfolioData.map(item => item.name || item.symbol.toUpperCase());
             const values = portfolioData.map(item => item.value);
-            const changes = portfolioData.map(item => item.change_24h);
+
             const backgroundColors = [
                 '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40',
                 '#E7E9ED', '#71B37C', '#EC932F', '#526958'
             ];
+
+            // Initialize Charts even if empty (but with default state)
+            const demoLabels = labels.length > 0 ? labels : ['No Assets'];
+            const demoValues = values.length > 0 ? values : [0.001];
+            const demoBg = labels.length > 0 ? backgroundColors : ['#333'];
 
             // Common Options for Dark Theme
             Chart.defaults.color = '#ffffff';
@@ -530,10 +548,10 @@
             window.distChart = new Chart(ctxPie, {
                 type: 'doughnut',
                 data: {
-                    labels: labels,
+                    labels: demoLabels,
                     datasets: [{
-                        data: values,
-                        backgroundColor: backgroundColors,
+                        data: demoValues,
+                        backgroundColor: demoBg,
                         borderWidth: 0,
                         borderColor: '#1a1a1a'
                     }]
