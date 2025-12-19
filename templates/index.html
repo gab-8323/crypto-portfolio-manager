@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Load Chart.js early for initialization -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
@@ -58,6 +59,7 @@
 
         <!-- Settings Bar -->
         <section class="card" aria-labelledby="settings-heading" style="padding: 15px; margin-bottom: 20px;">
+            <h2 id="settings-heading" class="sr-only">Settings</h2>
             <div
                 style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
                 <!-- Currency Switcher -->
@@ -344,7 +346,6 @@
         style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;">
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         // --- Real-time Dashboard Logic ---
         function requestNotificationPermission() {
@@ -526,24 +527,15 @@
 
             // 1. Distribution Pie Chart
             const ctxPie = document.getElementById('distributionChart').getContext('2d');
-            new Chart(ctxPie, {
+            window.distChart = new Chart(ctxPie, {
                 type: 'doughnut',
                 data: {
                     labels: labels,
                     datasets: [{
                         data: values,
                         backgroundColor: backgroundColors,
-                        borderWidth: 1,
+                        borderWidth: 0,
                         borderColor: '#1a1a1a'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    labels: portfolioData.map(c => c.name),
-                    datasets: [{
-                        data: portfolioData.map(c => c.value),
-                        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF'],
-                        borderWidth: 0
                     }]
                 },
                 options: {
@@ -670,7 +662,6 @@
 
         // Global functions for interactivity
         function filterChart(symbol) {
-            // ... (rest same as before)
             if (!trendChart) return;
 
             trendChart.data.datasets.forEach(ds => {
