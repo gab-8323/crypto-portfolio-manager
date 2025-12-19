@@ -2,7 +2,15 @@
 
 A premium, real-time cryptocurrency portfolio tracker built with **Flask**, **Chart.js**, and the **CoinGecko API**. Featuring glassmorphism design, interactive visualizations, and secure trading simulations.
 
-![Screenshots/Demos will appear here once you take them!]
+## 📸 Application Showcase
+
+````carousel
+![Main Dashboard](screenshots/dashboard.png)
+<!-- slide -->
+![Market Explorer](screenshots/market_explorer.png)
+<!-- slide -->
+![Auth UI Design](screenshots/login.png)
+````
 
 ## ✨ Features
 
