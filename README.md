@@ -30,7 +30,7 @@ A premium, real-time cryptocurrency portfolio tracker built with **Flask**, **Ch
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/gab-8323/crypto-portfolio-manager.git
+   git clone https://github.com/gab-8323/Crypto-Portfolio-Manager.git
    cd crypto-portfolio-manager
    ```
 
